@@ -16,7 +16,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features webgpu
+          args: --features webgl
 
   check_wasm:
     name: Check wasm32
@@ -32,7 +32,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features webgpu --lib --target wasm32-unknown-unknown
+          args: --features webgl --lib --target wasm32-unknown-unknown
 
   test:
     name: Test Suite
@@ -96,4 +96,4 @@ jobs:
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.8/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
       - name: Build
-        run: ./trunk build --features webgpu --config apps/app/Trunk.toml
+        run: ./trunk build --features webgl --config apps/app/Trunk.toml

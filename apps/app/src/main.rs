@@ -1,9 +1,9 @@
 use nightmare::prelude::*;
 
-mod app;
+mod game;
 
 fn main() {
-    launch_app(crate::app::App::default());
+    launch_app(crate::game::Game);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -13,5 +13,5 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(start)]
 pub async fn run_wasm() {
     set_panic_hook();
-    launch_app(crate::app::App::default());
+    launch_app(crate::game::Game);
 }

@@ -1,9 +1,9 @@
 use nightmare::prelude::*;
 
 #[derive(Default)]
-pub struct App;
+pub struct Game;
 
-impl State for App {
+impl App for Game {
     fn title(&self) -> &str {
         "Nightmare"
     }

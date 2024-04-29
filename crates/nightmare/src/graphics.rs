@@ -44,7 +44,7 @@ impl<'window> Renderer<'window> {
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::ClippedPrimitive>,
         textures_delta: egui::TexturesDelta,
-        delta_time: crate::Duration,
+        delta_time: &crate::Duration,
     ) {
         let delta_time = delta_time.as_secs_f32();
 
