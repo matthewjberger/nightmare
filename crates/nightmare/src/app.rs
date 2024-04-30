@@ -42,6 +42,12 @@ pub fn launch_app(state: impl App + 'static) {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+const WASM_FIXED_WIDTH: u32 = 1920;
+
+#[cfg(target_arch = "wasm32")]
+const WASM_FIXED_HEIGHT: u32 = 1080;
+
 async fn run_app(
     event_loop: winit::event_loop::EventLoop<()>,
     window: winit::window::Window,
@@ -68,7 +74,7 @@ async fn run_app(
     let (width, height) = (window.inner_size().width, window.inner_size().height.min(1));
 
     #[cfg(target_arch = "wasm32")]
-    let (width, height) = (1280, 720);
+    let (width, height) = (WASM_FIXED_WIDTH, WASM_FIXED_HEIGHT);
 
     let mut renderer = crate::render::Renderer::new(window.clone(), width, height).await;
 
@@ -78,26 +84,49 @@ async fn run_app(
         io: Io::default(),
         delta_time: crate::Duration::default(),
         asset: crate::asset::Asset::default(),
-        egui_context: gui_state.egui_ctx().clone(),
         event_queue: Vec::new(),
     };
     state.initialize(&mut context);
 
     event_loop
         .run(move |event, elwt| {
-            context
-                .event_queue
-                .drain(..)
-                .into_iter()
-                .for_each(|event| match event {
-                    ContextEvent::RequestWorldReload => {
-                        renderer.load_asset(&context.asset);
-                    }
-                    ContextEvent::Exit => {
-                        elwt.exit();
-                    }
-                });
+            context.event_queue.drain(..).for_each(|event| match event {
+                ContextEvent::RequestWorldReload => {
+                    renderer.load_asset(&context.asset);
+                }
+                ContextEvent::Exit => {
+                    elwt.exit();
+                }
+            });
 
+            let (width, height, screen_descriptor) = {
+                #[cfg(not(target_arch = "wasm32"))]
+                let (width, height, pixels_per_point) = {
+                    let window_size = window.inner_size();
+                    (
+                        window_size.width,
+                        window_size.height.min(1),
+                        window.scale_factor() as f32,
+                    )
+                };
+
+                #[cfg(target_arch = "wasm32")]
+                let (width, height, pixels_per_point) = (WASM_FIXED_WIDTH, WASM_FIXED_HEIGHT, 1.0);
+
+                (
+                    width,
+                    height,
+                    crate::render::ScreenDescriptor {
+                        size_in_pixels: [width, height],
+                        pixels_per_point,
+                    },
+                )
+            };
+
+            context.io.receive_event(
+                &event,
+                nalgebra_glm::vec2(width as f32 / 2.0, height as f32 / 2.0),
+            );
             state.receive_event(&mut context, &event);
 
             match event {
@@ -149,7 +178,7 @@ async fn run_app(
                             let gui_input = gui_state.take_egui_input(&window);
                             gui_state.egui_ctx().begin_frame(gui_input);
 
-                            state.update(&mut context);
+                            state.update(&mut context, gui_state.egui_ctx());
 
                             let egui::FullOutput {
                                 textures_delta,
@@ -161,18 +190,10 @@ async fn run_app(
                             let paint_jobs =
                                 gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
 
-                            let screen_descriptor = {
-                                let window_size = window.inner_size();
-                                crate::render::ScreenDescriptor {
-                                    size_in_pixels: [window_size.width, window_size.height],
-                                    pixels_per_point: window.scale_factor() as f32,
-                                }
-                            };
-
                             renderer.render_frame(
                                 &context.asset,
                                 &screen_descriptor,
-                                &paint_jobs,
+                                paint_jobs,
                                 &textures_delta,
                             );
                         }
@@ -199,14 +220,13 @@ pub trait App {
     fn receive_event(&mut self, _context: &mut Context, _event: &winit::event::Event<()>) {}
 
     /// Called every frame prior to rendering
-    fn update(&mut self, _context: &mut Context) {}
+    fn update(&mut self, _context: &mut Context, _ui: &egui::Context) {}
 }
 
 pub struct Context {
     pub io: Io,
     pub delta_time: crate::Duration,
     pub asset: crate::asset::Asset,
-    pub egui_context: egui::Context,
     pub event_queue: Vec<ContextEvent>,
 }
 

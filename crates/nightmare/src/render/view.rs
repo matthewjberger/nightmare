@@ -586,7 +586,7 @@ fn create_pipeline(
                 module: &shader_module,
                 entry_point: "fragment_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba16Float,
+                    format: wgpu::TextureFormat::Bgra8Unorm,
                     blend: if blending_enabled {
                         Some(wgpu::BlendState::ALPHA_BLENDING)
                     } else {
@@ -666,7 +666,7 @@ fn create_texture(gpu: &crate::render::gpu::Gpu, image: &crate::asset::Image) ->
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        format: wgpu::TextureFormat::Rgba8Snorm,
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });

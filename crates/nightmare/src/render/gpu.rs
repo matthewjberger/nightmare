@@ -7,8 +7,6 @@ pub struct Gpu<'window> {
 }
 
 impl<'window> Gpu<'window> {
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
-
     pub fn alignment(&self) -> u64 {
         self.device.limits().min_uniform_buffer_offset_alignment as wgpu::BufferAddress
     }
@@ -17,13 +15,7 @@ impl<'window> Gpu<'window> {
         self.surface_config.width as f32 / self.surface_config.height.max(1) as f32
     }
 
-    pub fn window_center(&self) -> nalgebra_glm::Vec2 {
-        nalgebra_glm::vec2(
-            self.surface_config.width as f32 / 2.0,
-            self.surface_config.height.max(1) as f32 / 2.0,
-        )
-    }
-
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn resize(&mut self, width: u32, height: u32) {
         log::info!("Resizing renderer surface to: ({width}, {height})");
         self.surface_config.width = width;
@@ -108,12 +100,11 @@ impl<'window> Gpu<'window> {
 
         let surface_capabilities = surface.get_capabilities(&adapter);
 
-        // This assumes an sRGB surface texture
         let surface_format = surface_capabilities
             .formats
             .iter()
             .copied()
-            .find(|f| f.is_srgb())
+            .find(|f| !f.is_srgb())
             .unwrap_or(surface_capabilities.formats[0]);
 
         let surface_config = wgpu::SurfaceConfiguration {

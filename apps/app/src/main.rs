@@ -13,5 +13,5 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(start)]
 pub async fn run_wasm() {
     set_panic_hook();
-    launch_app(crate::game::Game);
+    launch_app(crate::game::Game::default());
 }

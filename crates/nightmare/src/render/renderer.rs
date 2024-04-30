@@ -18,7 +18,7 @@ impl<'window> Renderer<'window> {
             crate::render::postprocess::PostprocessingPipeline::new(&gpu, width, height);
         let gui_renderer = egui_wgpu::Renderer::new(
             &gpu.device,
-            wgpu::TextureFormat::Bgra8UnormSrgb,
+            wgpu::TextureFormat::Bgra8Unorm,
             Some(wgpu::TextureFormat::Depth32Float),
             1,
         );
@@ -38,6 +38,7 @@ impl<'window> Renderer<'window> {
         );
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn resize(&mut self, width: u32, height: u32) {
         self.gpu.resize(width, height);
         self.postprocess_pipeline =
@@ -49,7 +50,7 @@ impl<'window> Renderer<'window> {
         &mut self,
         asset: &crate::asset::Asset,
         screen_descriptor: &ScreenDescriptor,
-        paint_jobs: &[egui::ClippedPrimitive],
+        paint_jobs: Vec<egui::ClippedPrimitive>,
         textures_delta: &egui::epaint::textures::TexturesDelta,
     ) {
         let mut encoder = self
@@ -58,6 +59,11 @@ impl<'window> Renderer<'window> {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
+
+        let screen_descriptor = egui_wgpu::ScreenDescriptor {
+            size_in_pixels: screen_descriptor.size_in_pixels,
+            pixels_per_point: screen_descriptor.pixels_per_point,
+        };
 
         for (id, image_delta) in &textures_delta.set {
             self.gui_renderer
@@ -68,10 +74,6 @@ impl<'window> Renderer<'window> {
             self.gui_renderer.free_texture(id);
         }
 
-        let screen_descriptor = egui_wgpu::ScreenDescriptor {
-            size_in_pixels: screen_descriptor.size_in_pixels,
-            pixels_per_point: screen_descriptor.pixels_per_point,
-        };
         self.gui_renderer.update_buffers(
             &self.gpu.device,
             &self.gpu.queue,
@@ -232,14 +234,4 @@ pub struct ScreenDescriptor {
 
     /// HiDPI scale factor (pixels per point).
     pub pixels_per_point: f32,
-}
-
-impl ScreenDescriptor {
-    /// size in "logical" points
-    pub fn screen_size_in_points(&self) -> [f32; 2] {
-        [
-            self.size_in_pixels[0] as f32 / self.pixels_per_point,
-            self.size_in_pixels[1] as f32 / self.pixels_per_point,
-        ]
-    }
 }
