@@ -12,7 +12,8 @@ impl App for Game {
 
     fn receive_event(&mut self, _context: &mut Context, _event: &winit::event::Event<()>) {}
 
-    fn update(&mut self, _context: &mut Context, ui: &egui::Context) {
+    fn update(&mut self, context: &mut Context) {
+        let ui = &mut context.egui_context;
         egui::Window::new("Game").show(ui, |ui| {
             ui.heading("Hello, world!");
             if ui.button("Click me!").clicked() {

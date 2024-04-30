@@ -70,18 +70,34 @@ async fn run_app(
     #[cfg(target_arch = "wasm32")]
     let (width, height) = (1280, 720);
 
-    let mut renderer = crate::graphics::Renderer::new(window.clone(), width, height).await;
+    let mut renderer = crate::render::Renderer::new(window.clone(), width, height).await;
 
     let mut last_render_time = crate::Instant::now();
 
     let mut context = Context {
         io: Io::default(),
         delta_time: crate::Duration::default(),
+        asset: crate::asset::Asset::default(),
+        egui_context: gui_state.egui_ctx().clone(),
+        event_queue: Vec::new(),
     };
     state.initialize(&mut context);
 
     event_loop
         .run(move |event, elwt| {
+            context
+                .event_queue
+                .drain(..)
+                .into_iter()
+                .for_each(|event| match event {
+                    ContextEvent::RequestWorldReload => {
+                        renderer.load_asset(&context.asset);
+                    }
+                    ContextEvent::Exit => {
+                        elwt.exit();
+                    }
+                });
+
             state.receive_event(&mut context, &event);
 
             match event {
@@ -133,7 +149,7 @@ async fn run_app(
                             let gui_input = gui_state.take_egui_input(&window);
                             gui_state.egui_ctx().begin_frame(gui_input);
 
-                            state.update(&mut context, gui_state.egui_ctx());
+                            state.update(&mut context);
 
                             let egui::FullOutput {
                                 textures_delta,
@@ -145,28 +161,19 @@ async fn run_app(
                             let paint_jobs =
                                 gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
 
-                            #[cfg(not(target_arch = "wasm32"))]
                             let screen_descriptor = {
                                 let window_size = window.inner_size();
-                                egui_wgpu::ScreenDescriptor {
+                                crate::render::ScreenDescriptor {
                                     size_in_pixels: [window_size.width, window_size.height],
                                     pixels_per_point: window.scale_factor() as f32,
                                 }
                             };
 
-                            #[cfg(target_arch = "wasm32")]
-                            let screen_descriptor = {
-                                egui_wgpu::ScreenDescriptor {
-                                    size_in_pixels: [1280, 720],
-                                    pixels_per_point: window.scale_factor() as f32,
-                                }
-                            };
-
                             renderer.render_frame(
-                                screen_descriptor,
-                                paint_jobs,
-                                textures_delta,
-                                &context.delta_time,
+                                &context.asset,
+                                &screen_descriptor,
+                                &paint_jobs,
+                                &textures_delta,
                             );
                         }
 
@@ -192,12 +199,20 @@ pub trait App {
     fn receive_event(&mut self, _context: &mut Context, _event: &winit::event::Event<()>) {}
 
     /// Called every frame prior to rendering
-    fn update(&mut self, _context: &mut Context, _ui: &egui::Context) {}
+    fn update(&mut self, _context: &mut Context) {}
 }
 
 pub struct Context {
     pub io: Io,
     pub delta_time: crate::Duration,
+    pub asset: crate::asset::Asset,
+    pub egui_context: egui::Context,
+    pub event_queue: Vec<ContextEvent>,
+}
+
+pub enum ContextEvent {
+    RequestWorldReload,
+    Exit,
 }
 
 #[derive(Default)]

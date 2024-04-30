@@ -3,7 +3,7 @@ use nightmare::prelude::*;
 mod game;
 
 fn main() {
-    launch_app(crate::game::Game);
+    launch_app(crate::game::Game::default());
 }
 
 #[cfg(target_arch = "wasm32")]

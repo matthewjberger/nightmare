@@ -7,17 +7,23 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-bytemuck = { version = "1.15.0", features = ["derive"] }
+anyhow = "1.0.81"
+bytemuck = { version = "1.15.0", features = ["derive", "bytemuck_derive"] }
 egui = "0.27.2"
 egui-wgpu = { version = "0.27.2", features = ["winit"] }
 env_logger = "0.11.3"
+gltf = { version = "1.4.0", features = ["KHR_lights_punctual", "names"] }
+image = "0.25.1"
 log = "0.4.21"
+rfd = "0.14.0"
 winit = "0.29.15"
 nalgebra-glm = { version = "0.18.0", features = [
     "convert-bytemuck",
     "serde-serialize",
 ] }
 wgpu = { version = "0.19.4", default-features = false }
+serde = { version = "1.0.199", features = ["derive"] }
+petgraph = { version = "0.6.4", features = ["serde-1"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.27.2"
