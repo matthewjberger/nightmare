@@ -10,7 +10,7 @@ pub struct PostprocessingPipeline {
 
 impl PostprocessingPipeline {
     pub fn new(gpu: &crate::render::gpu::Gpu, width: u32, height: u32) -> Self {
-        let format = wgpu::TextureFormat::Bgra8Unorm;
+        let format = wgpu::TextureFormat::Rgba16Float;
         let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
             label: None,
             size: wgpu::Extent3d {

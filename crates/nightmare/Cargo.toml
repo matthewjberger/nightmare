@@ -9,8 +9,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 anyhow = "1.0.81"
 bytemuck = { version = "1.15.0", features = ["derive", "bytemuck_derive"] }
-egui = "0.27.2"
-egui-wgpu = { version = "0.27.2", features = ["winit"] }
 env_logger = "0.11.3"
 gltf = { version = "1.4.0", features = ["KHR_lights_punctual", "names"] }
 image = "0.25.1"
@@ -26,13 +24,11 @@ serde = { version = "1.0.199", features = ["derive"] }
 petgraph = { version = "0.6.4", features = ["serde-1"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-egui-winit = "0.27.2"
 pollster = "0.3.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
-egui-winit = { version = "0.27.2", default-features = false }
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4.42"
 web-sys = "0.3.69"

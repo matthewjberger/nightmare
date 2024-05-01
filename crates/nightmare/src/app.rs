@@ -55,18 +55,6 @@ async fn run_app(
 ) {
     let window = std::sync::Arc::new(window);
 
-    let gui_context = egui::Context::default();
-
-    gui_context.set_pixels_per_point(window.scale_factor() as f32);
-    let viewport_id = gui_context.viewport_id();
-    let mut gui_state = egui_winit::State::new(
-        gui_context,
-        viewport_id,
-        &window,
-        Some(window.scale_factor() as _),
-        None,
-    );
-
     #[cfg(not(target_arch = "wasm32"))]
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
 
@@ -129,16 +117,12 @@ async fn run_app(
             );
             state.receive_event(&mut context, &event);
 
+            state.update(&mut context);
+
             match event {
                 winit::event::Event::AboutToWait => window.request_redraw(),
 
                 winit::event::Event::WindowEvent { ref event, .. } => {
-                    // Receive gui window event
-                    if gui_state.on_window_event(&window, event).consumed {
-                        return;
-                    }
-
-                    // If the gui didn't consume the event, handle it
                     match event {
                         winit::event::WindowEvent::KeyboardInput {
                             event:
@@ -174,30 +158,8 @@ async fn run_app(
                             let now = crate::Instant::now();
                             context.delta_time = now - last_render_time;
                             last_render_time = now;
-
-                            let gui_input = gui_state.take_egui_input(&window);
-                            gui_state.egui_ctx().begin_frame(gui_input);
-
-                            state.update(&mut context, gui_state.egui_ctx());
-
-                            let egui::FullOutput {
-                                textures_delta,
-                                shapes,
-                                pixels_per_point,
-                                ..
-                            } = gui_state.egui_ctx().end_frame();
-
-                            let paint_jobs =
-                                gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
-
-                            renderer.render_frame(
-                                &context.asset,
-                                &screen_descriptor,
-                                paint_jobs,
-                                &textures_delta,
-                            );
+                            renderer.render_frame(&context.asset);
                         }
-
                         _ => {}
                     }
                 }
@@ -220,7 +182,7 @@ pub trait App {
     fn receive_event(&mut self, _context: &mut Context, _event: &winit::event::Event<()>) {}
 
     /// Called every frame prior to rendering
-    fn update(&mut self, _context: &mut Context, _ui: &egui::Context) {}
+    fn update(&mut self, _context: &mut Context) {}
 }
 
 pub struct Context {

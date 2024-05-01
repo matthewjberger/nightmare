@@ -12,7 +12,6 @@ pub mod prelude {
         asset, camera, gltf, physics, Duration, Instant,
     };
 
-    pub use egui;
     pub use log;
     pub use petgraph;
     pub use rfd;

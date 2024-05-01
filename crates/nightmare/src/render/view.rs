@@ -586,7 +586,7 @@ fn create_pipeline(
                 module: &shader_module,
                 entry_point: "fragment_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Bgra8Unorm,
+                    format: wgpu::TextureFormat::Rgba16Float,
                     blend: if blending_enabled {
                         Some(wgpu::BlendState::ALPHA_BLENDING)
                     } else {
@@ -666,7 +666,7 @@ fn create_texture(gpu: &crate::render::gpu::Gpu, image: &crate::asset::Image) ->
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8Snorm,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });
@@ -838,7 +838,7 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let light_position = vec3<f32>(2.0, 2.0, 2.0);
     let light_color = vec3<f32>(1.0, 1.0, 1.0);
 
-    let ambient_strength = 0.1;
+    let ambient_strength = 0.3;
     let ambient_color = light_color * ambient_strength;
     let light_dir = normalize(light_position - in.position.xyz);
     let diffuse_strength =  max(dot(in.normal, light_dir), 0.0);

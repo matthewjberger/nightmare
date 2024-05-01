@@ -104,7 +104,7 @@ impl<'window> Gpu<'window> {
             .formats
             .iter()
             .copied()
-            .find(|f| !f.is_srgb())
+            .find(|f| f.is_srgb())
             .unwrap_or(surface_capabilities.formats[0]);
 
         let surface_config = wgpu::SurfaceConfiguration {
